@@ -18,7 +18,7 @@
     <modules>
         <module>fkl-shipping-lite-mysql-relayer</module>
         <module>fkl-shipping-lite-marvin-apicaller-consumer</module>
-        <module>fkl-shipping-lite-replicator-reconciliation</module>
+        <module>fkl-shipping-lite-replication-reconciler</module>
     </modules>
 
     <properties>

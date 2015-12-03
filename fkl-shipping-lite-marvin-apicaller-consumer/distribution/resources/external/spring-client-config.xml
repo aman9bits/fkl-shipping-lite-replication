@@ -6,11 +6,6 @@
     http://www.springframework.org/schema/util
 	http://www.springframework.org/schema/util/spring-util-2.5.xsd">
 
-    <bean
-            class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="location" value="classpath:project.properties" />
-    </bean>
-
     <bean id="defaultEventConsumerFactory"
           class="com.flipkart.aesop.eventconsumer.implementation.DefaultEventConsumerFactoryBean">
         <property name="mapper" ref="defaultMapperImpl" />
@@ -31,7 +26,7 @@
 
     <bean id="defaultMapperImpl"
           class="com.flipkart.aesop.mapper.implementation.DefaultMapperImpl">
-        <property name="configFilePath" value="${MAPPER_CONFIG_FILE_PATH}" />
+        <property name="configFilePath" value="resources/application.conf" />
         <property name="configRoot" value="MAPPER_CONFIG" />
         <property name="mapperConfig" ref="mapperConfig" />
         <property name="mapperTypeList">
@@ -72,14 +67,14 @@
 
     <bean id="apiCallerUpsertDataLayer"
           class="com.flipkart.aesop.apicallerdatalayer.upsert.ApiCallerUpsertDataLayerFactory">
-        <property name="url" value="${UPSERT_URI}" />
-        <property name="headers" value="${UPSERT_HEADERS}" />
+        <property name="url" value="http://localhost:8076/test" />
+        <property name="headers" value="{'MARVIN_CLIENT_ID':'shipping-lite-secondary-datastore','MARVIN_REF_ID':'$parentSrId','MARVIN_WORKFLOW_IDEMPOTENCY':true,'MARVIN_IDEMPOTENCY_DURATION':60}" />
     </bean>
 
     <bean id="apiCallerDeleteDataLayer"
           class="com.flipkart.aesop.apicallerdatalayer.delete.ApiCallerDeleteDataLayerFactory">
-        <property name="url" value="${DELETE_URI}" />
-        <property name="headers" value="${DELETE_HEADERS}" />
+        <property name="url" value="http://flo-marvin-backend.stage.ch.flipkart.com/workflows/aesop_marvin/start" />
+        <property name="headers" value="{'MARVIN_CLIENT_ID':'shipping-lite-secondary-datastore','MARVIN_REF_ID':'$parentSrId','MARVIN_WORKFLOW_IDEMPOTENCY':true,'MARVIN_IDEMPOTENCY_DURATION':60}" />
     </bean>
 
     <bean id="sampleClient"
@@ -88,7 +83,7 @@
         <property name="clusterRegistrations">
             <list>
                 <bean class="com.flipkart.aesop.runtime.config.ClusterRegistration">
-                    <property name="clusterName" value="pz_console_appender_cluster" />
+                    <property name="clusterName" value="pz_api_caller_cluster" />
                     <property name="consumerFactory">
                         <bean class="com.flipkart.aesop.eventconsumer.ConsumerFactory">
                             <property name="eventConsumerFactoryList">
@@ -132,8 +127,8 @@
             <list>
                 <bean class="com.flipkart.aesop.runtime.config.RelayClientConfig">
                     <property name="relayId" value="1" />
-                    <property name="relayHost" value="${RELAY_HOST}" />
-                    <property name="relayPort" value="${RELAY_PORT}" />
+                    <property name="relayHost" value="localhost" />
+                    <property name="relayPort" value="25021" />
                     <property name="relayLogicalSourceNames">
                         <list value-type="java.lang.String">
                             <value>com.flipkart.aesop.events.shipping-lite.ShipmentStatusHistories</value>
@@ -146,9 +141,9 @@
             <list>
                 <bean class="com.flipkart.aesop.runtime.config.ClusterInfoConfig">
                     <property name="id" value="1" />
-                    <property name="clusterName" value="pz_console_appender_cluster" />
-                    <property name="zkAddr" value="${ZK_ADDRESS}" />
-                    <property name="numPartitions" value="${NUM_PARTITIONS}" />
+                    <property name="clusterName" value="pz_api_caller_cluster" />
+                    <property name="zkAddr" value="localhost:2181" />
+                    <property name="numPartitions" value="5" />
                     <property name="quorum" value="1" />
                     <property name="zkSessionTimeoutMs" value="3000" />
                     <property name="zkConnectionTimeoutMs" value="3000" />
@@ -157,6 +152,6 @@
             </list>
         </property>
 
-        <property name="checkpointDirectoryLocation" value="${CHECKPOINT_DIR_LOCATION}" />
+        <property name="checkpointDirectoryLocation" value="../../data-dir/client_checkpoint_directory" />
     </bean>
 </beans>

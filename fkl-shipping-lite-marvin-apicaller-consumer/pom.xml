@@ -32,6 +32,27 @@
         <url>https://github.com/aman9bits/aesop</url>
         <connection>https://github.com/aman9bits/aesop.git</connection>
     </scm>
+    <profiles>
+        <profile>
+            <id>local</id>
+            <build>
+                <filters>
+                    <filter>src/main/filters/local.properties</filter>
+                </filters>
+            </build>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <build>
+                <filters>
+                    <filter>src/main/filters/prod.properties</filter>
+                </filters>
+            </build>
+        </profile>
+    </profiles>
 
     <build>
         <resources>
@@ -40,7 +61,6 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
-
         <plugins>
             <plugin>
                 <artifactId>maven-clean-plugin</artifactId>
@@ -71,7 +91,6 @@
                     <includes>
                         <include>packaged/**/*</include>
                         <include>com/**/*</include>
-                        <include>project.properties</include>
                     </includes>
                 </configuration>
             </plugin>
@@ -112,12 +131,8 @@
                                 <copy todir="distribution/" overwrite="true">
                                     <fileset dir="target/classes/scripts" />
                                 </copy>
-                                <copy
-                                        file="target/fkl-shipping-lite-marvin-apicaller-consumer-${project.version}.jar"
+                                <copy file="target/fkl-shipping-lite-marvin-apicaller-consumer-${project.version}.jar"
                                         toDir="distribution/lib" overwrite="true" />
-                                <copy file="target/classes/project.properties"
-                                      tofile="distribution/resources/external/project.properties.snapshot"
-                                      overwrite="true" />
                             </tasks>
                         </configuration>
                         <goals>

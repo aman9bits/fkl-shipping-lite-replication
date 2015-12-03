@@ -6,11 +6,6 @@
     http://www.springframework.org/schema/util
 	http://www.springframework.org/schema/util/spring-util-2.5.xsd">
 
-    <bean
-            class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="location" value="classpath:project.properties" />
-    </bean>
-
     <bean id="defaultEventConsumerFactory"
           class="com.flipkart.aesop.eventconsumer.implementation.DefaultEventConsumerFactoryBean">
         <property name="mapper" ref="defaultMapperImpl" />
@@ -88,7 +83,7 @@
         <property name="clusterRegistrations">
             <list>
                 <bean class="com.flipkart.aesop.runtime.config.ClusterRegistration">
-                    <property name="clusterName" value="pz_console_appender_cluster" />
+                    <property name="clusterName" value="pz_api_caller_cluster" />
                     <property name="consumerFactory">
                         <bean class="com.flipkart.aesop.eventconsumer.ConsumerFactory">
                             <property name="eventConsumerFactoryList">
@@ -146,7 +141,7 @@
             <list>
                 <bean class="com.flipkart.aesop.runtime.config.ClusterInfoConfig">
                     <property name="id" value="1" />
-                    <property name="clusterName" value="pz_console_appender_cluster" />
+                    <property name="clusterName" value="pz_api_caller_cluster" />
                     <property name="zkAddr" value="${ZK_ADDRESS}" />
                     <property name="numPartitions" value="${NUM_PARTITIONS}" />
                     <property name="quorum" value="1" />

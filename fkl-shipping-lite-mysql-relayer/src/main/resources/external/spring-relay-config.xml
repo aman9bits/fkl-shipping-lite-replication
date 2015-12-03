@@ -16,7 +16,7 @@
                             <property name="singleton" value="true"/>
                             <property name="properties">
                                 <props>
-                                    <prop key="databus.relay.dataSources.sequenceNumbersHandler.file.initVal">${RELAY_INIT_VALUE}</prop>
+                                    <prop key="databus.relay.dataSources.sequenceNumbersHandler.file.initVal">${relay_init_value}</prop>
                                 </props>
                             </property>
                         </bean>
@@ -73,13 +73,13 @@
     <bean id="physicalSourceConfig" class="com.linkedin.databus2.relay.config.PhysicalSourceConfig">
         <property name="id" value="1"/>
         <property name="name" value="personPhysicalSource"/>
-        <property name="uri" value="${MYSQL_SOURCE_URI}" />
+        <property name="uri" value="${mysql_source_uri}" />
         <property name="sources">
             <list>
                 <bean id="logicalSourceConfig" class="com.linkedin.databus2.relay.config.LogicalSourceConfig">
                     <property name="id" value="41"/>
                     <property name="name" value="com.flipkart.aesop.events.shipping-lite.ShipmentStatusHistories"/>
-                    <property name="uri" value="${TABLE_URI}"/>
+                    <property name="uri" value="${table_uri}"/>
                     <property name="partitionFunction" value="constant:1"/>
                 </bean>
             </list>
@@ -92,31 +92,25 @@
                 <property name="singleton" value="true"/>
                 <property name="properties">
                     <props>
-                        <prop key="databus.relay.container.httpPort">25021</prop>
+                        <prop key="databus.relay.container.httpPort">${relay_container_httpPort}</prop>
                         <prop key="databus.relay.container.jmx.rmiEnabled">false</prop>
-                        <prop key="databus.relay.eventBuffer.allocationPolicy">MMAPPED_MEMORY</prop>
-                        <prop key="databus.relay.eventBuffer.queuePolicy">OVERWRITE_ON_WRITE</prop>
+                        <prop key="databus.relay.eventBuffer.allocationPolicy">${eventBuffer_allocationPolicy}</prop>
+                        <prop key="databus.relay.eventBuffer.queuePolicy">${eventBuffer_queuePolicy}</prop>
                         <prop key="databus.relay.eventLogReader.enabled">false</prop>
                         <prop key="databus.relay.eventLogWriter.enabled">false</prop>
                         <prop key="databus.relay.schemaRegistry.type">FILE_SYSTEM</prop>
-                        <prop key="databus.relay.eventBuffer.maxSize">${EVENTBUFFER_MAXSIZE}</prop>
-                        <prop key="databus.relay.eventBuffer.readBufferSize">10240</prop>
-                        <prop key="databus.relay.eventBuffer.scnIndexSize">${EVENTBUFFER_SCNINDEXSIZE}</prop>
+                        <prop key="databus.relay.eventBuffer.maxSize">${eventbuffer_maxSize}</prop>
+                        <prop key="databus.relay.eventBuffer.readBufferSize">${eventBuffer_readBufferSize}</prop>
+                        <prop key="databus.relay.eventBuffer.scnIndexSize">${eventbuffer_scnIndexSize}</prop>
                         <prop key="databus.relay.eventBuffer.restoreMMappedBuffers">true</prop>
                         <!-- <prop key ="databus.relay.dataSources.sequenceNumbersHandler.file.initVal">4294967300</prop> -->
                     </props>
                 </property>
             </bean>
         </property>
-        <property name="schemaRegistryLocation" value="${SCHEMA_REGISTRY_LOCATION}"/>
-        <property name="mmappedDirectoryLocation" value="${MMAPPED_DIRECTORY_LOCATION}"/> <!-- This is relative to projects root -->
-        <property name="maxScnDirectoryLocation" value="${MAXSCN_DIRECTORY_LOCATION}"/> <!-- This is relative to projects root -->
+        <property name="schemaRegistryLocation" value="${schema_registry_location}"/>
+        <property name="mmappedDirectoryLocation" value="${mmapped_directory_location}"/> <!-- This is relative to projects root -->
+        <property name="maxScnDirectoryLocation" value="${maxscn_directory_location}"/> <!-- This is relative to projects root -->
     </bean>
-
-    <bean
-            class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="location" value="classpath:/project.properties" />
-    </bean>
-
 
 </beans>

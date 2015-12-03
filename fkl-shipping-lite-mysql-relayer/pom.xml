@@ -58,7 +58,35 @@
             <version>5.1.6</version>
         </dependency>
     </dependencies>
+    <profiles>
+        <profile>
+            <id>local</id>
+            <build>
+                <filters>
+                    <filter>src/main/filters/local.properties</filter>
+                </filters>
+            </build>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <build>
+                <filters>
+                    <filter>src/main/filters/prod.properties</filter>
+                </filters>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <artifactId>maven-clean-plugin</artifactId>
@@ -89,7 +117,6 @@
                     <includes>
                         <include>packaged/**/*</include>
                         <include>com/**/*</include>
-                        <include>project.properties</include>
                     </includes>
                 </configuration>
             </plugin>
@@ -131,9 +158,6 @@
                                 </copy>
                                 <copy todir="distribution/" overwrite="true">
                                     <fileset dir="target/classes/scripts" />
-                                </copy>
-                                <copy todir="distribution/resources" overwrite="true">
-                                    <fileset file="target/classes/project.properties"/>
                                 </copy>
                                 <copy file="target/fkl-shipping-lite-mysql-relayer-${project.parent.version}.jar"
                                       toDir="distribution/lib" overwrite="true" />
