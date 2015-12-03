@@ -1,0 +1,36 @@
+server:
+  applicationConnectors:
+  - type: http
+    port: 8094
+  adminConnectors:
+  - type: http
+    port: 8095
+  type: default
+
+redisServerIPAddress: localhost
+
+redis:
+  # The redis server's address; required.
+  endpoint: localhost:6379
+  # Auth password for redis server connection.  (default: null)
+  #password: null
+  # The minimum number of idle connections to maintain in the pool.  (default: 0)
+  minIdle: 0
+  # The maximum number of idle connections allowed in the pool.  (default: 0)
+  maxIdle: 0
+  # The maximum number of connections allowed in the pool.  (default: 1024)
+  maxTotal: 1924
+
+redisKeyNamesConfig:
+  shardDataKeyName: "shardData"
+  latestCheckpointsPerShardKeyName: "latest_checkpoints"
+  finalCheckpointTimeKeyName: "checkpointTime"
+  missingIdKeyNamePrefix: "missingFrom"
+  checkpointListPrefix: "checkpointList"
+  checkpointTimeMappingPrefix: "checkpointTimeMapping"
+
+apiConfig:
+  getTimeFromCheckpointBatchAPI: "http://localhost:8074/getTimeFromCheckpointBatch"
+  getShipmentStatusHistoriesBatchAPI: "http://localhost:8074/ShipmentStatusHistoryBatch"
+  marvinWorkflowStartAPI: "http://flo-marvin-backend.stage.ch.flipkart.com/workflows/aesop_marvin/start"
+  getLatestSSHPerShardAPI: "http://fkl-shipping-lite-1.nm.flipkart.com:28700/shipments/datastore/getLatestSshId"
