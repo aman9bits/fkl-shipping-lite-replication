@@ -17,7 +17,7 @@
     <!-- Set some of the 3rd party libraries to log only at INFO or higher levels -->
     <logger name="org.springframework" level="info"/>
 
-    <root level="{$LEVEL}">
+    <root level="info">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="FILE" />
     </root>
