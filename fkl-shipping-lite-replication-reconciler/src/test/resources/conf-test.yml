@@ -1,10 +1,10 @@
 server:
   applicationConnectors:
   - type: http
-    port: 8094
+    port: 8096
   adminConnectors:
   - type: http
-    port: 8095
+    port: 8097
   type: default
 
 redisServerIPAddress: localhost
@@ -24,9 +24,8 @@ apiConfig:
   getLatestSSHPerShardAPI: "http://localhost:8074/getLatestTime"
 
 redisConfiguration:
-
-  host: localhost
-  port: 6379
+  # The redis server's address; required.
+  endpoint: localhost:6379
   # The minimum number of idle connections to maintain in the pool.  (default: 0)
   minIdle: 10
   # The maximum number of idle connections allowed in the pool.  (default: 0)
