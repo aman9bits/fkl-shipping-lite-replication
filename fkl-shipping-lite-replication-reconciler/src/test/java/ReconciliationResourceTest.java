@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ReconciliationResourceTest {
+    /*
     private static final String CONFIG_PATH = ResourceHelpers.resourceFilePath("conf-test.yml");
     Client client;
     ReconciliationApplicationTest application;
@@ -95,5 +96,5 @@ public class ReconciliationResourceTest {
     }
 
 
-
+*/
 }

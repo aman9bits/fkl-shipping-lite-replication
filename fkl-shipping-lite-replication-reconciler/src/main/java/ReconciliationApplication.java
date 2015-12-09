@@ -1,6 +1,3 @@
-import com.bendb.dropwizard.redis.JedisBundle;
-import com.bendb.dropwizard.redis.JedisConfiguration;
-import com.bendb.dropwizard.redis.JedisFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -31,6 +28,7 @@ public class ReconciliationApplication extends Application<ReconciliationConfigu
             protected void configure() {
                 this.bind(ReconciliationConfiguration.class).toInstance(conf);
                 this.bind(ReconciliationResource.class);
+                this.bind(ReconcilerDataStore.class).to(RedisDataStore.class);
             }
         });
         environment.jersey().register(baseInjector.getInstance(ReconciliationResource.class));

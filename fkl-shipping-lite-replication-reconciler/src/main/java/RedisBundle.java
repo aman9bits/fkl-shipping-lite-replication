@@ -1,5 +1,3 @@
-import com.bendb.dropwizard.redis.JedisHealthCheck;
-import com.bendb.dropwizard.redis.jersey.JedisPoolBinder;
 import io.dropwizard.Configuration;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;
@@ -22,6 +20,8 @@ public abstract class RedisBundle<T extends Configuration> implements Configured
     public void run(T configuration, Environment environment) throws Exception {
         RedisConfiguration redisConfiguration = getRedisConfiguration(configuration);
         pool = buildPool(redisConfiguration);
+        environment.healthChecks().register("redis", new RedisHealthCheck(pool));
+        environment.jersey().register(new RedisPoolBinder(pool));
     }
 
     @Override
@@ -30,6 +30,7 @@ public abstract class RedisBundle<T extends Configuration> implements Configured
     public Jedis getJedisClient(){
         return this.pool.getResource();
     }
+    public JedisPool getPool(){return pool;}
     private JedisPool buildPool(RedisConfiguration redisConfiguration){
         GenericObjectPoolConfig config = new GenericObjectPoolConfig();
         config.setMaxIdle(redisConfiguration.getMaxIdle());

@@ -4,7 +4,7 @@
  */
 public class RedisKeyNamesConfig {
     private String shardDataKeyName;
-    private String latestCheckpointsPerShardKeyName;
+    private String latestCheckpointsKeyName;
     private String finalCheckpointTimeKeyName;
     private String missingIdKeyNamePrefix;
     private String checkpointListPrefix;
@@ -37,12 +37,12 @@ public class RedisKeyNamesConfig {
         this.shardDataKeyName = shardDataKeyName;
     }
 
-    public String getLatestCheckpointsPerShardKeyName() {
-        return this.latestCheckpointsPerShardKeyName;
+    public String getLatestCheckpointsKeyName() {
+        return this.latestCheckpointsKeyName;
     }
 
-    public void setLatestCheckpointsPerShardKeyName(String latestCheckpointsPerShardKeyName) {
-        this.latestCheckpointsPerShardKeyName = latestCheckpointsPerShardKeyName;
+    public void setLatestCheckpointsKeyName(String latestCheckpointsKeyName) {
+        this.latestCheckpointsKeyName = latestCheckpointsKeyName;
     }
 
     public String getFinalCheckpointTimeKeyName() {

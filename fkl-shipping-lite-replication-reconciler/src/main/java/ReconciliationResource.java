@@ -8,9 +8,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Transaction;
-import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -18,15 +15,25 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 
 @Path("/")
 public class ReconciliationResource {
+    public static final Logger LOGGER = LoggerFactory.getLogger(ReconciliationResource.class);
+    @Inject
+    ReconciliationConfiguration configuration;
+
+    @Inject
+    ReconcilerDataStore dataStore;
+
+    public ReconciliationResource(){
+    }
+    /*
     ReconciliationConfiguration configuration;
     public static final Logger LOGGER = LoggerFactory.getLogger(ReconciliationResource.class);
     String redisServerIPAddress;
@@ -42,15 +49,14 @@ public class ReconciliationResource {
         this.configuration = configuration;
         this.redisServerIPAddress = configuration.getRedisServerIPAddress();
         this.shardDataKeyName = configuration.getRedisKeyNamesConfig().getShardDataKeyName();
-        this.latestCheckpointsKeyName = configuration.getRedisKeyNamesConfig().getLatestCheckpointsPerShardKeyName();
+        this.latestCheckpointsKeyName = configuration.getRedisKeyNamesConfig().getLatestCheckpointsKeyName();
         this.finalCheckpointTimeKeyName = configuration.getRedisKeyNamesConfig().getFinalCheckpointTimeKeyName();
         this.missingIdKeyNamePrefix = configuration.getRedisKeyNamesConfig().getMissingIdKeyNamePrefix();
         this.checkpointListPrefix = configuration.getRedisKeyNamesConfig().getCheckpointListPrefix();
         this.checkpointTimeMappingPrefix = configuration.getRedisKeyNamesConfig().getCheckpointTimeMappingPrefix();
     }
+*/
 
-    @Inject
-    ReconcilerDataStore dataStore;
     @POST
     @Consumes("application/json")
     @Path("/insert")
@@ -80,10 +86,10 @@ public class ReconciliationResource {
             JSONObject requestJson = new JSONObject(request);
             long checkpoint = requestJson.getLong("checkpointID");
             String shardId = requestJson.getString("shardId");
-            long timestamp = requestJson.getLong("createdAt");
+            double timestamp = (double)requestJson.getLong("createdAt");
             dataStore.insertCheckpoint(checkpoint, shardId);
             LOGGER.info("Checkpoint added for checkpoint " + checkpoint + " and shardId " + shardId);
-            dataStore.insertChekpointTimeMapping(checkpoint,timestamp,shardId);
+            dataStore.insertCheckpointTimeMapping(checkpoint, timestamp, shardId);
             LOGGER.info("Checkpoint-Time Mapping added for checkpoint " + checkpoint + " and shardId " + shardId);
             return Response.status(Status.OK).build();
         } catch (JSONException e) {
@@ -124,13 +130,22 @@ public class ReconciliationResource {
 */
         Map<String,Long> shardData = dataStore.getShardData();
         Map<String,Long> latestCheckpoints = dataStore.getLatestCheckpoints();
-        Map<String,ArrayList<Long>> missingIds = dataStore.findMissingIds(shardData,latestCheckpoints);
-        dataStore.storeMissingIds(missingIds);
+        ArrayList threadList = new ArrayList();
+        for (Map.Entry<String,Long> entry : shardData.entrySet() ){
+            String shardId = entry.getKey();
+            FindMissingIdThread thread = new FindMissingIdThread(shardId, entry.getValue(), latestCheckpoints.get(shardId),dataStore);
+            thread.start();
+            LOGGER.info("Find missing id Thread started for shard " + shardId);
+            threadList.add(thread);
+        }
+        //Map<String,ArrayList<Long>> missingIds = dataStore.findMissingIds(shardData,latestCheckpoints);
+        //dataStore.storeMissingIds(missingIds);
     }
 
     @POST
     @Path("/reconcile")
     public void reconcile() {
+        /*
         LOGGER.info("Reconcile service started.");
         LOGGER.info("Getting shard data..");
         Set shardIds = jedis.hkeys(this.shardDataKeyName);
@@ -150,6 +165,20 @@ public class ReconciliationResource {
             LOGGER.info("Reconciliation Thread started for shard " + th.shardId);
         }
 
+*/
+        String marvinAPI = configuration.getApiConfig().getMarvinWorkflowStartAPI();
+        String getSSHBatchAPI = configuration.getApiConfig().getGetShipmentStatusHistoriesBatchAPI();
+        ArrayList threadList = new ArrayList();
+        Map<String,Long> latestCheckpoints = dataStore.getLatestCheckpoints();
+        for(Map.Entry<String,Long> entry : latestCheckpoints.entrySet()){
+            String shardId = entry.getKey();
+            Long checkpoint = entry.getValue();
+            ArrayList<Long> missingIds = dataStore.getMissingIds(shardId,checkpoint);
+            Thread thread = new ReconciliationThread(shardId,missingIds,getSSHBatchAPI,marvinAPI);
+            thread.start();
+            LOGGER.info("Reconciliation Thread started for shard " + entry.getKey());
+            threadList.add(thread);
+        }
     }
 
     @POST
@@ -165,7 +194,10 @@ public class ReconciliationResource {
             List latestSSHPerShardList = response.readEntity(List.class);
             LOGGER.info("Call successful with response " + response.getStatus() + " and response as " + latestSSHPerShardList);
             LOGGER.info("Getting latest checkpointed values for each shard..");
-            Map checkpointsMap = jedis.hgetAll(this.latestCheckpointsKeyName);
+            //Map checkpointsMap = jedis.hgetAll(this.latestCheckpointsKeyName);
+            Map<String,Long> checkpointsMap = dataStore.getLatestCheckpoints();
+            Map<String,Double> timeMap = dataStore.getTimeMappingFromCheckpoint(checkpointsMap);
+            /*
             Transaction transaction = jedis.multi();
             ArrayList shardIds = new ArrayList();
             HashMap checkpointTimeMapping = new HashMap();
@@ -182,9 +214,10 @@ public class ReconciliationResource {
             for(int i = 0; i < shardIds.size(); ++i) {
                 checkpointTimeMapping.put(shardIds.get(i), trans.get(i));
             }
-
-            String final_time = findSyncedTime(checkpointsMap, latestSSHPerShardList, checkpointTimeMapping);
-            jedis.set(this.finalCheckpointTimeKeyName, final_time);
+*/
+            Double final_time = findSyncedTime(checkpointsMap, latestSSHPerShardList, timeMap);
+            //jedis.set(this.finalCheckpointTimeKeyName, final_time);
+            dataStore.setFinalCheckpointedTime(final_time);
             LOGGER.info("New final checkpointed time saved as " + final_time);
         } catch (Exception exception) {
             LOGGER.error("Sync Failed", exception);
@@ -192,13 +225,13 @@ public class ReconciliationResource {
 
     }
 
-    public static String findSyncedTime(Map<String, String> checkpointsMap, List<Map<String, String>> latestSSHPerShardList, Map<String, Double> checkpointTimeMapping) {
-        double final_timestamp = 1.7976931348623157E308D;
+    public static Double findSyncedTime(Map<String, Long> checkpointsMap, List<Map<String, String>> latestSSHPerShardList, Map<String, Double> checkpointTimeMapping) {
+        double final_timestamp = Double.MAX_VALUE;
 
         for (Object aLatestSSHPerShardList : latestSSHPerShardList) {
             Map shardDataItem = (Map) aLatestSSHPerShardList;
             String shardId = (String) shardDataItem.get("shardId");
-            long redisCheckpoint = Long.parseLong(checkpointsMap.get(shardId));
+            long redisCheckpoint = checkpointsMap.get(shardId);
             if (Long.parseLong((String) shardDataItem.get("sshId")) == redisCheckpoint) {
                 final_timestamp = Double.min(final_timestamp, Double.parseDouble((String) shardDataItem.get("currentTimeStamp")));
             } else {
@@ -207,7 +240,7 @@ public class ReconciliationResource {
             }
         }
 
-        return String.valueOf(final_timestamp);
+        return final_timestamp;
     }
 
     @POST
@@ -215,6 +248,19 @@ public class ReconciliationResource {
     public void purgeCheckpointList() {
         LOGGER.info("Purge service started.");
         LOGGER.info("Starting purge operation for checkpoints lists..");
+        LOGGER.info("Getting latest checkpointed values for each shard..");
+        Map<String,Long> latestCheckpoints = dataStore.getLatestCheckpoints();
+        for(Map.Entry<String,Long> entry : latestCheckpoints.entrySet()){
+            String shardId = entry.getKey();
+            Long checkpoint = entry.getValue();
+            dataStore.purgeCheckpointsList(shardId, checkpoint);
+            dataStore.purgeMappingsList(shardId, checkpoint);
+            dataStore.purgeMissingIdsList(shardId, checkpoint);
+        }
+
+
+
+        /*
         LOGGER.info("Getting latest checkpointed values for each shard..");
         Map latest_checkpoints = jedis.hgetAll(this.latestCheckpointsKeyName);
 
@@ -253,6 +299,7 @@ public class ReconciliationResource {
         }
 
         LOGGER.info("Purge for missing ids finished.");
+        */
     }
 
     @POST
@@ -260,7 +307,25 @@ public class ReconciliationResource {
     public void updateCheckpoint() {
         LOGGER.info("updateCheckpoint service started.");
         LOGGER.info("Getting latest checkpoints for each shard..");
-        Map latest_checkpoints = jedis.hgetAll(this.latestCheckpointsKeyName);
+        //Map latest_checkpoints = jedis.hgetAll(this.latestCheckpointsKeyName);
+        Map<String,Long> latest_checkpoints = dataStore.getLatestCheckpoints();
+        //Map<String,ArrayList<Long>> checkpointsList = dataStore.getCheckpointsList(latest_checkpoints);
+        for(Map.Entry<String,Long> entry : latest_checkpoints.entrySet()){
+            String shardId = entry.getKey();
+            Long checkpoint = entry.getValue();
+            Long[] checkpointList = dataStore.getCheckpointsList(shardId,checkpoint);
+            int low = 0;
+            int length = checkpointList.length;
+            int high = length - 1;
+            Long newCheckpoint = findCheckpoint(low, high, length, checkpointList);
+            latest_checkpoints.put(shardId,newCheckpoint);
+        }
+
+        Map<String,Double> timeMapping = dataStore.getTimeMappingFromCheckpoint(latest_checkpoints);
+        Double currentCheckpointedTime = dataStore.getCheckpointedTime();
+        double newCheckpointedTime = calculateFinalCheckpointTime(timeMapping,currentCheckpointedTime);
+        dataStore.setFinalCheckpointedTime(newCheckpointedTime);
+        /*
         ArrayList checkpointTime = new ArrayList();
 
         for (Object o : latest_checkpoints.entrySet()) {
@@ -299,33 +364,37 @@ public class ReconciliationResource {
         } else {
             LOGGER.info("Final checkpoint time unchanged.");
         }
+        */
 
     }
 
-    public static String findCheckpoint(int low, int high, int length, String[] arr) {
+    private double calculateFinalCheckpointTime(Map<String, Double> timeMapping, Double currentCheckpointedTime) {
+        double finalTime = 0;
+        for(Map.Entry<String,Double> entry : timeMapping.entrySet()){
+            double timestamp = entry.getValue();
+            if (finalTime == 0 || finalTime > timestamp ) {
+                  finalTime = timestamp;
+            }
+        }
+        finalTime = Double.max(finalTime,currentCheckpointedTime);
+        return finalTime;
+    }
+
+    public static Long findCheckpoint(int low, int high, int length, Long[] arr) {
         System.out.print("" + low + high + length + arr);
         if(high == low) {
             return arr[low];
-        } else if((long)(high - low) == Long.parseLong(arr[high]) - Long.parseLong(arr[low])) {
+        } else if((long)(high - low) == arr[high] - arr[low]) {
             return arr[high];
         } else {
             int mid = (low + high) / 2;
-            return mid == low?arr[low]:((long)(mid - low) == Long.parseLong(arr[mid]) - Long.parseLong(arr[low])?findCheckpoint(mid, high, (length + 1) / 2, arr):findCheckpoint(low, mid, (length + 1) / 2, arr));
+            return mid == low?arr[low]:((long)(mid - low) == arr[mid] - arr[low]?findCheckpoint(mid, high, (length + 1) / 2, arr):findCheckpoint(low, mid, (length + 1) / 2, arr));
         }
     }
 
     @GET
     @Path("/test")
     public void test() {
-        HashMap map = new HashMap();
-        map.put("key1", "val1");
-        map.put("key2", "");
-        map.put("key3", null);
-        System.out.println(map.toString());
-        JSONObject json = new JSONObject(map);
-        json.append("key4", null);
-        System.out.println(json.toString());
-        JSONObject json2 = new JSONObject(map);
-        System.out.println(json2);
+
     }
 }

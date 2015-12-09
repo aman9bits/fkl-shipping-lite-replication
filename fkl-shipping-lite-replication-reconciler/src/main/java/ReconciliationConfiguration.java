@@ -1,4 +1,3 @@
-import com.bendb.dropwizard.redis.JedisFactory;
 import io.dropwizard.Configuration;
 
 /**

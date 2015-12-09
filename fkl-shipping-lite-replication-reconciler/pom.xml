@@ -63,11 +63,6 @@
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>com.bendb.dropwizard</groupId>
-            <artifactId>dropwizard-redis</artifactId>
-            <version>0.8.1-1</version>
-        </dependency>
 
     </dependencies>
 

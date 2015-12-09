@@ -11,7 +11,7 @@ redisServerIPAddress: localhost
 
 redisKeyNamesConfig:
   shardDataKeyName: "shardData"
-  latestCheckpointsPerShardKeyName: "latest_checkpoints"
+  latestCheckpointsKeyName: "latest_checkpoints"
   finalCheckpointTimeKeyName: "checkpointTime"
   missingIdKeyNamePrefix: "missingFrom"
   checkpointListPrefix: "checkpointList"

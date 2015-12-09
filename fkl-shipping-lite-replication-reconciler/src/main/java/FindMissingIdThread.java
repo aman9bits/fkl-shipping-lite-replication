@@ -1,17 +1,27 @@
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
 
-import javax.ws.rs.core.Context;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by aman.gupta on 21/09/15.
  */
 
 public class FindMissingIdThread extends Thread {
+    public static final Logger LOGGER = LoggerFactory.getLogger(FindMissingIdThread.class);
+    String shardId;
+    long checkpoint;
+    long latestSSH;
+    ReconcilerDataStore datastore;
+    public FindMissingIdThread(String shardId, Long latestSSH, Long checkpoint, ReconcilerDataStore datastore) {
+        this.shardId = shardId;
+        this.checkpoint = checkpoint;
+        this.latestSSH = latestSSH;
+        this.datastore = datastore;
+    }
+    public FindMissingIdThread(){}
+    /*
     @Context
     Jedis jedis;
     String shardId;
@@ -20,7 +30,7 @@ public class FindMissingIdThread extends Thread {
     String missingIdKeyNamePrefix;
     String checkpointListPrefix;
     long latestSSH;
-    public static final Logger LOGGER = LoggerFactory.getLogger(FindMissingIdThread.class);
+
 
     public FindMissingIdThread(String shardId, String checkpoint, String redisServerIPAddress, String missingIdKeyNamePrefix, String checkpointListPrefix, long latestSSH) {
         this.shardId = shardId;
@@ -30,7 +40,24 @@ public class FindMissingIdThread extends Thread {
         this.checkpointListPrefix = checkpointListPrefix;
         this.latestSSH = latestSSH;
     }
+*/
+    public void run(){
+        LOGGER.info("FindMissingId thread started for shard " + this.shardId);
+        LOGGER.info("Getting checkpoint list for shard " + this.shardId);
+        Long[] checkpointsList = datastore.getCheckpointsList(shardId,checkpoint);
+        int length = checkpointsList.length;
+        byte low = 0;
+        int high = length - 1;
+        List<Long> missingList = new ArrayList<Long>();
+        binarySearch(low, high, checkpointsList, missingList);
+        for(long missingId = checkpointsList[length] + 1; missingId <= this.latestSSH; ++missingId) {
+            missingList.add(missingId);
+        }
+        datastore.addMissingIds(shardId,missingList);
+        LOGGER.info("Missing Ids"+ missingList.toString() +"added to the corresponding list for shard " + this.shardId);
+    }
 
+/*
     public void run() {
         LOGGER.info("FindMissingId thread started for shard " + this.shardId);
         LOGGER.info("Getting checkpoint list for shard " + this.shardId);
@@ -49,20 +76,20 @@ public class FindMissingIdThread extends Thread {
         this.jedis.zadd(this.missingIdKeyNamePrefix + this.shardId, missingList);
         LOGGER.info("Missing Ids added to the corresponding list for shard " + this.shardId);
     }
-
-    public static void binarySearch(int low, int high, String[] arr, Map arr2) {
+*/
+    public static void binarySearch(int low, int high, Long[] arr, List arr2) {
         if(high - low != 1) {
-            if(high - low != Integer.parseInt(arr[high]) - Integer.parseInt(arr[low])) {
+            if(high - low != arr[high] - arr[low]) {
                 int mid = (low + high) / 2;
                 binarySearch(low, mid, arr, arr2);
                 binarySearch(mid, high, arr, arr2);
             }
 
         } else {
-            for(long mid = (long)(Integer.parseInt(arr[low]) + 1); mid < (long)Integer.parseInt(arr[high]); ++mid) {
-                arr2.put(String.valueOf(mid), Double.valueOf((double)mid));
+            for(long mid = arr[low] + 1; mid < arr[high]; ++mid) {
+                arr2.add(mid);
             }
-
         }
     }
+
 }
